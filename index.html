@@ -421,7 +421,7 @@ function seedFirestore(){
     if(snap.exists()){ seeding = false; return; }
     var batch = writeBatch(db);
     DEFAULT_PRODUCTS.forEach(function(p){ batch.set(doc(db, "products", p.id), p); });
-    seedLogs().forEach(function(l){ batch.set(doc(collection(db, "transactions")), demoTxDoc(l)); });
+    seedLogs().forEach(function(l, i){ batch.set(doc(db, "transactions", "seed-" + (i + 1)), demoTxDoc(l)); });
     batch.set(doc(db, "meta", "seed"), {done:true, at:Date.now()});
     return batch.commit();
   }).catch(function(err){ seeding = false; showLoginError("Gagal menyiapkan data awal: " + err.message); });
@@ -648,7 +648,7 @@ function resetDemo(){
     DEFAULT_PRODUCTS.forEach(function(p){ batch.set(doc(db, "products", p.id), p); });
     getDocs(query(collection(db, "transactions"), where("demo", "==", true))).then(function(snap){
       snap.forEach(function(d){ batch.delete(d.ref); });
-      seedLogs().forEach(function(l){ batch.set(doc(collection(db, "transactions")), demoTxDoc(l)); });
+      seedLogs().forEach(function(l, i){ batch.set(doc(db, "transactions", "seed-" + (i + 1)), demoTxDoc(l)); });
       return batch.commit();
     }).then(function(){
       alert("Demo direset. Stok kembali ke data awal dan transaksi contoh dibuat ulang. Transaksi asli tidak dihapus.");
