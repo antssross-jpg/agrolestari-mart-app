@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agrolestari Mart — Prototipe Aplikasi</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f4f6f3;color:#1c2b1e;line-height:1.5}
+  header{background:#1e6b34;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:10}
+  header h1{font-size:18px}
+  header p{font-size:12px;opacity:.85}
+  .wrap{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+  .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .demobanner{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+  h2{font-size:16px;margin-bottom:10px}
+  h3{font-size:14px;margin:14px 0 8px}
+  .rolegrid{display:grid;grid-template-columns:1fr;gap:10px}
+  .rolebtn{display:block;width:100%;text-align:left;background:#fff;border:2px solid #c8e6c9;border-radius:12px;padding:14px;cursor:pointer}
+  .rolebtn b{font-size:16px;color:#1e6b34}
+  .rolebtn span{display:block;font-size:13px;color:#555;margin-top:2px}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{background:#f1f8f2;border-radius:10px;padding:12px}
+  .kpi small{font-size:12px;color:#555}
+  .kpi b{display:block;font-size:17px;margin-top:2px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .b-red{background:#fde8e8;color:#b91c1c}.b-amber{background:#fef3c7;color:#92400e}
+  .b-green{background:#dcfce7;color:#166534}.b-blue{background:#dbeafe;color:#1d4ed8}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 6px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
+  th{font-size:12px;color:#555}
+  .num{text-align:right;white-space:nowrap}
+  input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:15px;margin-bottom:10px}
+  label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+  .btn{background:#1e6b34;color:#fff;border:none;border-radius:10px;padding:12px 16px;font-size:15px;width:100%;cursor:pointer}
+  .btn.ghost{background:#fff;color:#1e6b34;border:1px solid #1e6b34;margin-top:8px}
+  .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .tab{flex:1;min-width:70px;background:#fff;border:1px solid #c8e6c9;color:#1e6b34;border-radius:20px;padding:8px 4px;font-size:13px;cursor:pointer;text-align:center}
+  .tab.on{background:#1e6b34;color:#fff}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .topbar b{font-size:14px}
+  .logout{background:none;border:none;color:#1e6b34;font-size:13px;text-decoration:underline;cursor:pointer}
+  .logitem{border-bottom:1px solid #eee;padding:8px 0;font-size:13px}
+  .logitem small{color:#777}
+  .muted{font-size:12px;color:#777}
+  .search{margin-bottom:10px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🥛 Agrolestari Mart</h1>
+  <p>Pusat Susu Segar &amp; Pangan Sehat — Prototipe Aplikasi</p>
+</header>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="view-login">
+    <div class="demobanner" id="login-banner">🔒 <b>Prototipe demo</b> — bukan aplikasi asli. Data contoh (sintetis); harga jual dari pricelist asli Agrolestari Mart. Ketuk salah satu peran untuk masuk, tanpa password.</div>
+
+    <!-- MODE DEMO: tombol peran (dipakai bila FIREBASE_CONFIG masih placeholder) -->
+    <div class="card" id="login-demo">
+      <h2>Masuk sebagai</h2>
+      <div class="rolegrid">
+        <button class="rolebtn" onclick="login('Direktur')"><b>👔 Direktur</b><span>Lihat seluruh data &amp; laporan. Hanya baca — tidak input barang.</span></button>
+        <button class="rolebtn" onclick="login('Manager')"><b>🧑‍💼 Manager</b><span>Lihat seluruh data, kelola stok, dan input barang masuk/keluar.</span></button>
+        <button class="rolebtn" onclick="login('Staff')"><b>🧑‍🔧 Staff</b><span>Lihat stok &amp; input barang masuk/keluar. Tidak melihat omzet &amp; laba.</span></button>
+      </div>
+    </div>
+
+    <!-- MODE FIREBASE: login email + password (dipakai bila FIREBASE_CONFIG sudah diisi) -->
+    <div class="card hidden" id="login-firebase">
+      <h2>Masuk dengan akun</h2>
+      <form onsubmit="submitLogin(event)">
+        <label>Email</label>
+        <input id="f-email" type="email" required placeholder="cth: manager@agrolestari.id">
+        <label>Password</label>
+        <input id="f-password" type="password" required placeholder="Password akunmu">
+        <button class="btn" type="submit">Masuk</button>
+      </form>
+      <p style="color:#b91c1c;font-size:13px;margin-top:8px" id="login-error"></p>
+      <p class="muted" id="login-status"></p>
+      <p class="muted" style="margin-top:8px">Akun dibuat oleh manager/direktur di Firebase Console. Satu akun untuk satu orang — peranmu (Direktur/Manager/Staff) dibaca otomatis dari database.</p>
+    </div>
+
+    <p class="muted" id="login-footnote">Alur ini persis yang kamu minta: direktur &amp; manager melihat seluruh data, staff hanya input barang masuk-keluar. Versi asli nantinya butuh akun + password per orang dan database di cloud (mis. Firebase/Supabase) supaya datanya sama di semua HP.</p>
+  </div>
+
+  <!-- APP -->
+  <div id="view-app" class="hidden">
+    <div class="topbar"><b id="whoami"></b><button class="logout" onclick="logout()">Keluar ↩</button></div>
+    <div class="tabs" id="tabs"></div>
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard">
+      <div class="card">
+        <h2>📊 Dashboard — 12 bulan (Nov 2025–Okt 2026)</h2>
+        <div class="kpis">
+          <div class="kpi"><small>Omzet 12 bulan</small><b>Rp6,14 M</b></div>
+          <div class="kpi"><small>Laba kotor</small><b>Rp1,42 M</b></div>
+          <div class="kpi"><small>Margin kotor</small><b>23,2%</b></div>
+          <div class="kpi"><small>Produk stok KRITIS</small><b id="kpi-kritis">1 produk</b></div>
+        </div>
+        <h3>⚠️ Perlu tindakan hari ini</h3>
+        <div id="alerts"></div>
+        <h3>🏆 Top 5 laba setahun</h3>
+        <table>
+          <tr><th>Produk</th><th class="num">Laba</th></tr>
+          <tr><td>Bakso sapi NON MSG</td><td class="num">Rp107,2 jt</td></tr>
+          <tr><td>Nugget Ayam NON MSG</td><td class="num">Rp97,9 jt</td></tr>
+          <tr><td>Chicken katsu</td><td class="num">Rp83,5 jt</td></tr>
+          <tr><td>Dimsum Happy</td><td class="num">Rp83,4 jt</td></tr>
+          <tr><td>Sosis Ayam NON MSG</td><td class="num">Rp81,9 jt</td></tr>
+        </table>
+        <h3>🚚 Supplier</h3>
+        <table>
+          <tr><th>Supplier</th><th class="num">OTIF</th><th class="num">Lead time</th></tr>
+          <tr><td>CV Pangan Sehat Makmur</td><td class="num">0,95 ✅</td><td class="num">3,1 hari</td></tr>
+          <tr><td>PT Agro Segar Nusantara</td><td class="num">0,80 ⚠️</td><td class="num">6,8 hari</td></tr>
+        </table>
+        <p class="muted" style="margin-top:10px">Telur (flagship) margin cuma 8,9% — menyumbang 11,9% omzet tapi hanya 4,6% laba. Promo Dimsum/Lumpia menaikkan volume tapi memangkas laba/hari ±40%.</p>
+      </div>
+    </div>
+
+    <!-- STOK -->
+    <div id="tab-stok" class="hidden">
+      <div class="card">
+        <h2>📦 Stok — akhir Okt 2026</h2>
+        <input class="search" id="search" placeholder="🔍 Cari produk…" oninput="renderStok()">
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Produk</th><th class="num">Harga</th><th class="num">Stok</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="stok-body"></tbody>
+        </table></div>
+        <p class="muted" style="margin-top:8px">KRITIS = stok di bawah safety stock • PESAN = di bawah reorder point • OVERSTOCK = stok jauh di atas reorder point.</p>
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div id="tab-input" class="hidden">
+      <div class="card">
+        <h2>🔄 Input Barang Masuk / Keluar</h2>
+        <form onsubmit="submitBarang(event)">
+          <label>Produk</label>
+          <select id="f-produk"></select>
+          <label>Jenis</label>
+          <select id="f-jenis"><option value="masuk">Barang MASUK (pembelian / retur masuk)</option><option value="keluar">Barang KELUAR (penjualan / rusak / afkir)</option></select>
+          <label>Jumlah</label>
+          <input id="f-qty" type="number" min="1" step="1" placeholder="cth: 100" required>
+          <label>Keterangan (opsional)</label>
+          <input id="f-note" type="text" placeholder="cth: kiriman supplier, telur pecah 5 butir">
+          <button class="btn" type="submit">💾 Simpan &amp; Update Stok</button>
+        </form>
+        <p class="muted" style="margin-top:8px">Stok langsung berubah di tabel Stok dan tercatat di Riwayat. Di versi asli, data ini tersimpan di cloud dan langsung terlihat oleh direktur &amp; manager.</p>
+      </div>
+    </div>
+
+    <!-- RIWAYAT -->
+    <div id="tab-riwayat" class="hidden">
+      <div class="card">
+        <h2>🧾 Riwayat Barang Masuk / Keluar</h2>
+        <div id="log-list"><p class="muted">Belum ada input. Coba input dari tab “Input Barang”.</p></div>
+        <button class="btn ghost" id="btn-reset" onclick="resetDemo()">↺ Reset demo ke data awal</button>
+      </div>
+    </div>
+
+    <!-- LAPORAN -->
+    <div id="tab-laporan" class="hidden">
+      <div class="card">
+        <h2>📈 Laporan — data live</h2>
+        <p class="muted" style="margin-bottom:10px">Dihitung langsung dari riwayat barang masuk/keluar yang diinput di aplikasi. Setiap input baru langsung mengubah laporan ini.</p>
+        <div class="tabs" id="report-tabs">
+          <button class="tab on" data-periode="hari" onclick="setPeriode('hari')">Harian</button>
+          <button class="tab" data-periode="minggu" onclick="setPeriode('minggu')">Mingguan</button>
+          <button class="tab" data-periode="bulan" onclick="setPeriode('bulan')">Bulanan</button>
+          <button class="tab" data-periode="tahun" onclick="setPeriode('tahun')">Tahunan</button>
+        </div>
+        <div class="topbar">
+          <button class="logout" onclick="geserPeriode(-1)">‹ Sebelumnya</button>
+          <b id="report-label"></b>
+          <button class="logout" onclick="geserPeriode(1)">Berikutnya ›</button>
+        </div>
+        <div class="kpis" id="report-kpis"></div>
+        <h3>Per produk</h3>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Produk</th><th class="num">Masuk</th><th class="num">Keluar</th><th class="num">Selisih</th><th class="num">Nilai masuk</th><th class="num">Nilai keluar</th></tr></thead>
+          <tbody id="report-body"></tbody>
+        </table></div>
+        <p class="muted" style="margin-top:8px" id="report-note"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ============================================================================
+//  FIREBASE — VERSI CLOUD (sinkron antar HP)
+//  ----------------------------------------------------------------------------
+//  CARA PAKAI:
+//  1. Isi FIREBASE_CONFIG di bawah dengan konfigurasi web app dari Firebase
+//     Console (Project settings -> Your apps -> Web app). Selama nilainya masih
+//     "PASTE_CONFIG_DI_SINI", file ini berjalan dalam MODE DEMO (persis seperti
+//     prototipe awal: data di localStorage, login lewat tombol peran).
+//  2. Setelah config diisi, file ini otomatis memakai Firebase: login pakai
+//     email + password (Firebase Authentication), peran dibaca dari Firestore
+//     (koleksi users), data produk & transaksi tersimpan di Firestore dan
+//     tersinkron real-time ke semua HP yang sedang membuka aplikasi.
+//  3. Pasang Security Rules di bawah ke Firestore (Console -> Firestore
+//     Database -> Rules), supaya hanya user yang login yang bisa baca/tulis.
+//  SDK: Firebase JavaScript SDK modular v11.9.0 (rilis Juni 2025), via CDN.
+// ============================================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, onSnapshot, query, orderBy, where, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
+
+// ▼▼▼ TEMPEL KONFIGURASI FIREBASE-MU DI SINI ▼▼▼
+// Ambil dari Firebase Console -> Project settings (ikon gerigi) -> Your apps ->
+// Web app (</>) -> "SDK setup and configuration" -> Config. Salin semua isinya.
+// (measurementId untuk Analytics tidak perlu — boleh dikosongkan.)
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBAmsqYNxeAcgJhi_yqDX4CxWkNAfp3ax8",
+  authDomain: "agroletari-mart.firebaseapp.com",
+  projectId: "agroletari-mart",
+  storageBucket: "agroletari-mart.firebasestorage.app",
+  messagingSenderId: "856106473787",
+  appId: "1:856106473787:web:5e5ab76f8d696324b37f1e"
+};
+// ▲▲▲ BATAS TEMPEL ▲▲▲
+
+// Mode Firebase aktif hanya bila apiKey sudah diganti dengan config asli.
+var USE_FIREBASE = FIREBASE_CONFIG.apiKey !== "PASTE_CONFIG_DI_SINI";
+var db = null, auth = null, unsubProducts = null, unsubLogs = null, seeding = false;
+var userName = "";
+
+/* ============================================================================
+   FIRESTORE SECURITY RULES — salin ke Firebase Console -> Firestore -> Rules
+   ----------------------------------------------------------------------------
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       function isSignedIn() { return request.auth != null; }
+       function myRole() {
+         return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+       }
+       // Produk: semua user login bisa baca. Stok diubah Manager/Staff
+       // (lewat input barang) dan Direktur (hapus stok kedaluwarsa).
+       // Produk baru hanya boleh dibuat bila belum ada (untuk seeding
+       // awal) — tidak bisa menimpa produk yang sudah ada.
+       match /products/{id} {
+         allow read: if isSignedIn();
+         allow create: if isSignedIn() && !exists(/databases/$(database)/documents/products/$(id));
+         allow update: if isSignedIn() && (myRole() == 'Manager' || myRole() == 'Staff' || myRole() == 'Direktur');
+         allow delete: if false;
+       }
+       // Transaksi: semua user login bisa baca & membuat (input barang).
+       // Ubah/hapus hanya Manager/Direktur (untuk reset demo).
+       match /transactions/{id} {
+         allow read, create: if isSignedIn();
+         allow update, delete: if isSignedIn() && (myRole() == 'Manager' || myRole() == 'Direktur');
+       }
+       // Peran user: hanya bisa dibaca user yang login (diri sendiri, atau
+       // Manager/Direktur). TIDAK BISA ditulis dari aplikasi — peran hanya
+       // diatur manual lewat Firebase Console. Jadi tidak ada yang bisa
+       // mengangkat dirinya sendiri jadi Direktur.
+       match /users/{uid} {
+         allow read: if isSignedIn() && (request.auth.uid == uid || myRole() == 'Manager' || myRole() == 'Direktur');
+         allow write: if false;
+       }
+       // Penanda seeding awal: siapa pun yang login boleh membuat sekali,
+       // selanjutnya hanya Manager/Direktur yang boleh mengubah.
+       match /meta/{id} {
+         allow read: if isSignedIn();
+         allow create: if isSignedIn();
+         allow update, delete: if isSignedIn() && (myRole() == 'Manager' || myRole() == 'Direktur');
+       }
+     }
+   }
+   ========================================================================== */
+
+// Data awal: harga jual dari pricelist asli; stok akhir Okt 2026 + reorder point + safety stock dari portofolio.
+var DEFAULT_PRODUCTS = [
+  {id:"P01",nama:"Telur Ayam Bahagia",kat:"Telur",harga:2900,stok:180,rop:1100,ss:440},
+  {id:"P02",nama:"Telur Ayam Bahagia pack karton isi 10",kat:"Telur",harga:35000,stok:90,rop:90,ss:36},
+  {id:"P03",nama:"Telur Bebek Bahagia",kat:"Telur",harga:3000,stok:120,rop:225,ss:90},
+  {id:"P04",nama:"Telur Asin Cage free pack isi 4",kat:"Telur",harga:19000,stok:70,rop:60,ss:24},
+  {id:"P05",nama:"Susu Sapi 1 liter plastik",kat:"Susu Sapi & Kambing",harga:16000,stok:200,rop:300,ss:120},
+  {id:"P06",nama:"Susu Sapi 1 liter isi Ulang",kat:"Susu Sapi & Kambing",harga:13000,stok:180,rop:200,ss:80},
+  {id:"P07",nama:"Susu Kambing 1 liter plastik",kat:"Susu Sapi & Kambing",harga:28000,stok:80,rop:75,ss:30},
+  {id:"P08",nama:"Yummy yogurt sapi 250ml",kat:"Olahan Susu & Minuman",harga:13000,stok:200,rop:175,ss:70},
+  {id:"P09",nama:"Happy milk 250ml",kat:"Olahan Susu & Minuman",harga:10000,stok:260,rop:225,ss:90},
+  {id:"P10",nama:"Beefsice 250gr",kat:"Daging Sapi & Kambing",harga:35000,stok:110,rop:100,ss:40},
+  {id:"P11",nama:"Daging giling 250gr",kat:"Daging Sapi & Kambing",harga:32000,stok:90,rop:80,ss:32},
+  {id:"P12",nama:"Dimsum Happy",kat:"Frozen Food",harga:33000,stok:130,rop:110,ss:44},
+  {id:"P13",nama:"Siomay yamcha",kat:"Frozen Food",harga:34000,stok:100,rop:90,ss:36},
+  {id:"P14",nama:"Ayam Goreng si Mande",kat:"Lauk Frozen",harga:21000,stok:150,rop:150,ss:60},
+  {id:"P15",nama:"Chicken katsu",kat:"Lauk Frozen",harga:27000,stok:130,rop:125,ss:50},
+  {id:"P16",nama:"Ayam Kampung 1 ekor",kat:"Ayam Organik",harga:55000,stok:80,rop:70,ss:28},
+  {id:"P17",nama:"Fillet dada Organic 500gr",kat:"Ayam Organik",harga:63000,stok:420,rop:60,ss:24},
+  {id:"P18",nama:"Nila Bumbu",kat:"Ikan Bumbu & Seafood",harga:25000,stok:110,rop:100,ss:40},
+  {id:"P19",nama:"Udang rebus 500gr",kat:"Ikan Bumbu & Seafood",harga:41000,stok:60,rop:50,ss:20},
+  {id:"P20",nama:"Lumpia Udang",kat:"Snack Home Made",harga:34000,stok:110,rop:90,ss:36},
+  {id:"P21",nama:"Risol Smoke Beef Chese Mayo",kat:"Snack Home Made",harga:28500,stok:120,rop:100,ss:40},
+  {id:"P22",nama:"Bakso sapi NON MSG",kat:"Frozen Non MSG",harga:21000,stok:200,rop:175,ss:70},
+  {id:"P23",nama:"Nugget Ayam NON MSG",kat:"Frozen Non MSG",harga:23000,stok:170,rop:150,ss:60},
+  {id:"P24",nama:"Sosis Ayam NON MSG",kat:"Frozen Non MSG",harga:23000,stok:150,rop:125,ss:50}
+];
+var KEY = "agrolestari-demo-v1";
+var products, logs, role;
+function seedLogs(){
+  var now = Date.now(), D = 24*3600*1000;
+  function at(daysAgo, h, m){ var d = new Date(now - daysAgo*D); d.setHours(h, m, 0, 0); return d.getTime(); }
+  function mk(nama, jenis, qty, daysAgo, h, m){
+    var p = DEFAULT_PRODUCTS.find(function(x){ return x.nama===nama; });
+    var t = at(daysAgo, h, m);
+    return {nama:nama, jenis:jenis, qty:qty, note:"Contoh demo", oleh:"Staff",
+      waktu:new Date(t).toLocaleString("id-ID"), ts:t, stokAkhir:p?p.stok:0};
+  }
+  return [
+    mk("Telur Ayam Bahagia","masuk",300,0,9,0),
+    mk("Telur Ayam Bahagia","keluar",120,0,11,30),
+    mk("Susu Sapi 1 liter plastik","keluar",40,0,14,0),
+    mk("Susu Sapi 1 liter plastik","masuk",100,1,10,0),
+    mk("Bakso sapi NON MSG","keluar",50,3,15,0),
+    mk("Bakso sapi NON MSG","masuk",100,5,9,30),
+    mk("Chicken katsu","keluar",30,10,13,0),
+    mk("Dimsum Happy","masuk",60,40,10,0)
+  ];
+}
+// ---- MODE DEMO: data di localStorage (perilaku sama persis seperti prototipe awal) ----
+function initDemo(){
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    products = saved ? saved.products : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    logs = (saved && saved.logs && saved.logs.length) ? saved.logs : seedLogs();
+  } catch(e) {
+    products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)); logs = seedLogs();
+  }
+}
+function save(){ if(USE_FIREBASE) return; try{ localStorage.setItem(KEY, JSON.stringify({products:products, logs:logs})); }catch(e){} }
+
+// ---- MODE FIREBASE: Authentication + Firestore real-time ----
+function initFirebase(){
+  var app = initializeApp(FIREBASE_CONFIG);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  document.getElementById("login-demo").classList.add("hidden");
+  document.getElementById("login-firebase").classList.remove("hidden");
+  document.getElementById("login-banner").innerHTML = "☁️ <b>Mode Firebase — tersambung ke cloud</b> — data tersimpan di database dan tersinkron ke semua HP. Masuk dengan email &amp; password akunmu.";
+  document.getElementById("login-footnote").textContent = "Peranmu (Direktur/Manager/Staff) dibaca dari koleksi users di Firestore. Kalau akunmu belum punya peran, login akan ditolak — minta manager/direktur mendaftarkan peranmu.";
+  products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  logs = [];
+  onAuthStateChanged(auth, function(user){
+    if(user){ loadUserRole(user); } else { showLoginView(); }
+  });
+}
+function showLoginError(msg){ var el = document.getElementById("login-error"); if(el) el.textContent = msg || ""; }
+function showLoginView(){
+  document.getElementById("view-app").classList.add("hidden");
+  document.getElementById("view-login").classList.remove("hidden");
+}
+function pesanErrorAuth(err){
+  var c = err && err.code ? err.code : "";
+  if(c==="auth/invalid-credential" || c==="auth/wrong-password" || c==="auth/user-not-found") return "Email atau password salah. Periksa lagi, lalu coba masuk.";
+  if(c==="auth/invalid-email") return "Format email tidak valid.";
+  if(c==="auth/too-many-requests") return "Terlalu banyak percobaan gagal. Tunggu beberapa menit, lalu coba lagi.";
+  if(c==="auth/network-request-failed") return "Tidak ada koneksi internet. Periksa koneksimu, lalu coba lagi.";
+  if(c==="auth/user-disabled") return "Akun ini dinonaktifkan. Hubungi manager/direktur.";
+  return "Gagal masuk: " + (err && err.message ? err.message : "kesalahan tidak dikenal");
+}
+function submitLogin(e){
+  e.preventDefault();
+  var email = document.getElementById("f-email").value.trim();
+  var pw = document.getElementById("f-password").value;
+  showLoginError("");
+  var st = document.getElementById("login-status"); if(st) st.textContent = "Menghubungkan…";
+  signInWithEmailAndPassword(auth, email, pw).then(function(){
+    if(st) st.textContent = "";
+  }).catch(function(err){
+    if(st) st.textContent = "";
+    showLoginError(pesanErrorAuth(err));
+  });
+}
+function loadUserRole(user){
+  getDoc(doc(db, "users", user.uid)).then(function(snap){
+    if(!snap.exists()){
+      showLoginError("Akun ini belum punya peran. Minta manager/direktur mendaftarkan peranmu di Firestore (koleksi users, dokumen id = " + user.uid + ").");
+      signOut(auth); return;
+    }
+    var d = snap.data();
+    if(["Direktur","Manager","Staff"].indexOf(d.role) < 0){
+      showLoginError("Peran di akun ini tidak dikenal: " + d.role + ". Minta manager/direktur memperbaikinya di Firestore.");
+      signOut(auth); return;
+    }
+    role = d.role; userName = d.nama || user.email;
+    startListeners();
+    enterApp();
+  }).catch(function(err){ showLoginError("Gagal membaca data akun: " + err.message); });
+}
+function startListeners(){
+  if(unsubProducts) unsubProducts();
+  if(unsubLogs) unsubLogs();
+  unsubProducts = onSnapshot(collection(db, "products"), function(snap){
+    var arr = [];
+    snap.forEach(function(d){ arr.push(d.data()); });
+    arr.sort(function(a,b){ return a.id < b.id ? -1 : 1; });
+    if(arr.length){ products = arr; refreshProductSelect(); renderAll(); }
+    else { seedFirestore(); }
+  }, function(err){ showLoginError("Gagal membaca data produk: " + err.message); });
+  unsubLogs = onSnapshot(query(collection(db, "transactions"), orderBy("ts")), function(snap){
+    logs = [];
+    snap.forEach(function(d){ logs.push(d.data()); });
+    renderAll();
+  }, function(err){ showLoginError("Gagal membaca riwayat: " + err.message); });
+}
+function demoTxDoc(l){
+  return {nama:l.nama, jenis:l.jenis, qty:l.qty, note:l.note, oleh:l.oleh,
+    waktu:l.waktu, ts:l.ts, stokAkhir:l.stokAkhir, demo:true};
+}
+function seedFirestore(){
+  if(seeding) return; seeding = true;
+  getDoc(doc(db, "meta", "seed")).then(function(snap){
+    if(snap.exists()){ seeding = false; return; }
+    var batch = writeBatch(db);
+    DEFAULT_PRODUCTS.forEach(function(p){ batch.set(doc(db, "products", p.id), p); });
+    seedLogs().forEach(function(l){ batch.set(doc(collection(db, "transactions")), demoTxDoc(l)); });
+    batch.set(doc(db, "meta", "seed"), {done:true, at:Date.now()});
+    return batch.commit();
+  }).catch(function(err){ seeding = false; showLoginError("Gagal menyiapkan data awal: " + err.message); });
+}
+function rp(n){ return "Rp" + n.toLocaleString("id-ID"); }
+function statusOf(p){
+  if (p.stok < p.ss) return ["KRITIS","b-red"];
+  if (p.stok < p.rop) return ["PESAN","b-amber"];
+  if (p.stok > p.rop * 3) return ["OVERSTOCK","b-blue"];
+  return ["AMAN","b-green"];
+}
+var TABS = {
+  "Direktur": [["dashboard","📊 Dashboard"],["stok","📦 Stok"],["laporan","📈 Laporan"],["riwayat","🧾 Riwayat"]],
+  "Manager":  [["dashboard","📊 Dashboard"],["stok","📦 Stok"],["input","🔄 Input Barang"],["laporan","📈 Laporan"],["riwayat","🧾 Riwayat"]],
+  "Staff":    [["stok","📦 Stok"],["input","🔄 Input Barang"],["riwayat","🧾 Riwayat"]]
+};
+function refreshProductSelect(){
+  var sel = document.getElementById("f-produk");
+  if(!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = products.map(function(p){ return '<option value="'+p.id+'">'+p.nama+' — stok '+p.stok+'</option>'; }).join("");
+  if(cur) sel.value = cur;
+}
+function enterApp(){
+  document.getElementById("view-login").classList.add("hidden");
+  document.getElementById("view-app").classList.remove("hidden");
+  document.getElementById("whoami").textContent = "Masuk sebagai " + role + (USE_FIREBASE ? " • " + userName + " • ☁️ tersinkron" : " (demo)");
+  var tabs = document.getElementById("tabs"); tabs.innerHTML = "";
+  TABS[role].forEach(function(t, i){
+    var b = document.createElement("button");
+    b.className = "tab" + (i===0 ? " on" : ""); b.textContent = t[1];
+    b.onclick = function(){ showTab(t[0]); };
+    b.dataset.tab = t[0]; tabs.appendChild(b);
+  });
+  refreshProductSelect();
+  // Mode Firebase: tombol Reset hanya untuk Manager (Direktur hanya baca).
+  var rb = document.getElementById("btn-reset");
+  if(rb) rb.style.display = (USE_FIREBASE && role !== "Manager") ? "none" : "";
+  renderAll(); showTab(TABS[role][0][0]);
+  window.scrollTo(0,0);
+}
+function login(r){
+  role = r;
+  enterApp();
+}
+function logout(){
+  if(USE_FIREBASE && auth){ signOut(auth); }
+  showLoginView();
+}
+function showTab(name){
+  ["dashboard","stok","input","laporan","riwayat"].forEach(function(t){
+    var el = document.getElementById("tab-"+t); if(el) el.classList.toggle("hidden", t!==name);
+  });
+  document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("on", b.dataset.tab===name); });
+}
+function renderAll(){ renderStok(); renderAlerts(); renderLog(); renderReport(); }
+function renderStok(){
+  var q = (document.getElementById("search").value || "").toLowerCase();
+  var rows = products.filter(function(p){ return p.nama.toLowerCase().indexOf(q)>=0 || p.kat.toLowerCase().indexOf(q)>=0; });
+  document.getElementById("stok-body").innerHTML = rows.map(function(p){
+    var s = statusOf(p);
+    var aksi = (role==="Manager" || role==="Direktur") ? "<td><button class='logout' onclick=\"hapusStok('"+p.id+"')\">🗑️ Hapus kedaluwarsa</button></td>" : "<td class='muted'>—</td>";
+    return "<tr><td>"+p.nama+"<br><small class='muted'>"+p.kat+" • ROP "+p.rop+" • SS "+p.ss+"</small></td><td class='num'>"+rp(p.harga)+"</td><td class='num'><b>"+p.stok+"</b></td><td><span class='badge "+s[1]+"'>"+s[0]+"</span></td>"+aksi+"</tr>";
+  }).join("") || "<tr><td colspan='5'>Tidak ada produk yang cocok.</td></tr>";
+  var kritis = products.filter(function(p){ return statusOf(p)[0]==="KRITIS"; }).length;
+  document.getElementById("kpi-kritis").textContent = kritis + " produk";
+}
+function renderAlerts(){
+  var a = products.filter(function(p){ return statusOf(p)[0]==="KRITIS" || statusOf(p)[0]==="PESAN"; });
+  document.getElementById("alerts").innerHTML = a.map(function(p){
+    var s = statusOf(p);
+    var msg = s[0]==="KRITIS" ? "stok "+p.stok+" di bawah safety stock "+p.ss+" — pesan hari ini." : "stok "+p.stok+" di bawah reorder point "+p.rop+" — siapkan pesanan.";
+    return "<p style='font-size:13px;margin-bottom:6px'><span class='badge "+s[1]+"'>"+s[0]+"</span> <b>"+p.nama+"</b> — "+msg+"</p>";
+  }).join("") || "<p class='muted'>Semua stok aman.</p>";
+}
+function renderLog(){
+  var el = document.getElementById("log-list");
+  if(!logs.length){ el.innerHTML = "<p class='muted'>Belum ada input. Coba input dari tab “Input Barang”.</p>"; return; }
+  el.innerHTML = logs.slice().reverse().map(function(l){
+    var label = l.jenis==="masuk" ? "⬆️ MASUK" : l.jenis==="hapus" ? "🗑️ HAPUS (kedaluwarsa)" : "⬇️ KELUAR";
+    return "<div class='logitem'><b>"+label+"</b> — "+l.nama+" × "+l.qty+"<br><small>"+l.waktu+" • oleh "+l.oleh+(l.note?" • "+l.note:"")+" • stok jadi "+l.stokAkhir+"</small></div>";
+  }).join("");
+}
+// ---- LAPORAN LIVE (harian / mingguan / bulanan / tahunan) ----
+var reportPeriode = "hari";
+var reportRef = new Date();
+function tsOf(l){
+  if(l.ts) return l.ts;
+  if(!l.waktu) return null;
+  try{
+    var parts = l.waktu.split(", ");
+    var d = parts[0].split("/");
+    var t = (parts[1]||"0.0.0").split(".");
+    return new Date(+d[2], +d[1]-1, +d[0], +t[0], +t[1], +t[2]).getTime();
+  }catch(e){ return null; }
+}
+function startOfDay(d){ var x = new Date(d); x.setHours(0,0,0,0); return x; }
+function periodBounds(){
+  var r = reportRef, start, end;
+  if(reportPeriode==="hari"){ start = startOfDay(r); end = new Date(start); end.setDate(end.getDate()+1); }
+  else if(reportPeriode==="minggu"){
+    var dow = (r.getDay()+6)%7;
+    start = startOfDay(r); start.setDate(start.getDate()-dow);
+    end = new Date(start); end.setDate(end.getDate()+7);
+  }
+  else if(reportPeriode==="bulan"){ start = new Date(r.getFullYear(), r.getMonth(), 1); end = new Date(r.getFullYear(), r.getMonth()+1, 1); }
+  else { start = new Date(r.getFullYear(), 0, 1); end = new Date(r.getFullYear()+1, 0, 1); }
+  return [start.getTime(), end.getTime(), start, end];
+}
+function periodLabel(start, end){
+  var o = {day:"numeric", month:"long", year:"numeric"};
+  if(reportPeriode==="hari") return start.toLocaleDateString("id-ID", o);
+  if(reportPeriode==="minggu") return start.toLocaleDateString("id-ID", {day:"numeric", month:"short"}) + " \u2013 " + new Date(end-1).toLocaleDateString("id-ID", o);
+  if(reportPeriode==="bulan") return start.toLocaleDateString("id-ID", {month:"long", year:"numeric"});
+  return String(start.getFullYear());
+}
+function setPeriode(p){
+  reportPeriode = p; reportRef = new Date();
+  document.querySelectorAll("#report-tabs .tab").forEach(function(b){ b.classList.toggle("on", b.dataset.periode===p); });
+  renderReport();
+}
+function geserPeriode(dir){
+  var r = new Date(reportRef);
+  if(reportPeriode==="hari") r.setDate(r.getDate()+dir);
+  else if(reportPeriode==="minggu") r.setDate(r.getDate()+7*dir);
+  else if(reportPeriode==="bulan") r.setMonth(r.getMonth()+dir);
+  else r.setFullYear(r.getFullYear()+dir);
+  reportRef = r; renderReport();
+}
+function renderReport(){
+  var b = periodBounds(), from = b[0], to = b[1];
+  document.getElementById("report-label").textContent = periodLabel(b[2], b[3]);
+  var inLogs = logs.filter(function(l){ var t = tsOf(l); return t!==null && t>=from && t<to; });
+  var masukQty=0, keluarQty=0, masukRp=0, keluarRp=0, hapusQty=0, nTrans=0, per = {};
+  inLogs.forEach(function(l){
+    if(l.jenis==="hapus"){ hapusQty+=l.qty; return; }
+    nTrans++;
+    var p = products.find(function(x){ return x.nama===l.nama; });
+    var harga = p ? p.harga : 0;
+    var e = per[l.nama] || (per[l.nama] = {masuk:0, keluar:0, masukRp:0, keluarRp:0});
+    if(l.jenis==="masuk"){ masukQty+=l.qty; masukRp+=l.qty*harga; e.masuk+=l.qty; e.masukRp+=l.qty*harga; }
+    else { keluarQty+=l.qty; keluarRp+=l.qty*harga; e.keluar+=l.qty; e.keluarRp+=l.qty*harga; }
+  });
+  document.getElementById("report-kpis").innerHTML =
+    '<div class="kpi"><small>Barang MASUK</small><b>'+masukQty+' item</b><br><span class="muted">'+rp(masukRp)+'</span></div>' +
+    '<div class="kpi"><small>Barang KELUAR</small><b>'+keluarQty+' item</b><br><span class="muted">'+rp(keluarRp)+'</span></div>' +
+    '<div class="kpi"><small>Selisih nilai (masuk \u2212 keluar)</small><b>'+rp(masukRp-keluarRp)+'</b></div>' +
+    '<div class="kpi"><small>Jumlah transaksi</small><b>'+nTrans+'\u00d7</b></div>';
+  var names = Object.keys(per).sort();
+  document.getElementById("report-body").innerHTML = names.length ? names.map(function(n){
+    var e = per[n];
+    return "<tr><td>"+n+"</td><td class='num'>"+e.masuk+"</td><td class='num'>"+e.keluar+"</td><td class='num'>"+(e.masuk-e.keluar)+"</td><td class='num'>"+rp(e.masukRp)+"</td><td class='num'>"+rp(e.keluarRp)+"</td></tr>";
+  }).join("") : "<tr><td colspan='6'>Belum ada transaksi pada periode ini. Coba input dari tab \u201cInput Barang\u201d.</td></tr>";
+  document.getElementById("report-note").textContent = "Periode: " + document.getElementById("report-label").textContent + " \u2022 " + nTrans + " transaksi \u2022 Nilai dihitung dari harga jual pricelist." + (hapusQty>0 ? " \u2022 Dihapus karena kedaluwarsa: "+hapusQty+" item (tidak dihitung sebagai barang keluar)." : "");
+}
+function hapusStok(id){
+  if(role!=="Manager" && role!=="Direktur"){ alert("Hanya Manager dan Direktur yang boleh menghapus stok kedaluwarsa."); return; }
+  var p = products.find(function(x){ return x.id===id; });
+  if(!p || p.stok < 1){ alert("Stok "+(p?p.nama:"produk")+" sudah 0 — tidak ada yang bisa dihapus."); return; }
+  var raw = prompt("Hapus stok kedaluwarsa untuk "+p.nama+" (stok saat ini: "+p.stok+").\nJumlah yang dihapus:", "");
+  if(raw===null) return;
+  var qty = parseInt(raw, 10);
+  if(!qty || qty < 1){ alert("Jumlah harus diisi (minimal 1)."); return; }
+  if(qty > p.stok){ alert("Jumlah yang dihapus tidak boleh lebih besar dari stok ("+p.stok+")."); return; }
+  if(!confirm("Hapus "+qty+" × "+p.nama+" dari stok karena kedaluwarsa? Stok akan menjadi "+(p.stok-qty)+".")) return;
+  var newStok = p.stok - qty;
+  if(USE_FIREBASE){
+    var entry = {nama:p.nama, jenis:"hapus", qty:qty, note:"Stok kedaluwarsa dihapus", oleh:(userName || role),
+      waktu:new Date().toLocaleString("id-ID"), ts:Date.now(), stokAkhir:newStok, demo:false};
+    Promise.all([
+      updateDoc(doc(db, "products", p.id), {stok:newStok}),
+      addDoc(collection(db, "transactions"), entry)
+    ]).then(function(){
+      alert("Berhasil: "+qty+" × "+p.nama+" dihapus dari stok (kedaluwarsa). Stok sekarang "+newStok+".\nPerubahan ini langsung terlihat di semua HP.");
+    }).catch(function(err){ alert("Gagal menghapus: " + err.message + "\nPeriksa koneksi internetmu, lalu coba lagi."); });
+    return;
+  }
+  p.stok = newStok;
+  logs.push({nama:p.nama, jenis:"hapus", qty:qty, note:"Stok kedaluwarsa dihapus", oleh:role,
+    waktu:new Date().toLocaleString("id-ID"), ts:Date.now(), stokAkhir:p.stok});
+  save(); renderAll();
+  alert("Berhasil: "+qty+" × "+p.nama+" dihapus dari stok (kedaluwarsa). Stok sekarang "+p.stok+".");
+}
+function submitBarang(e){
+  e.preventDefault();
+  var id = document.getElementById("f-produk").value;
+  var jenis = document.getElementById("f-jenis").value;
+  var qty = parseInt(document.getElementById("f-qty").value, 10);
+  var note = document.getElementById("f-note").value.trim();
+  if(!qty || qty < 1){ alert("Jumlah harus diisi (minimal 1)."); return; }
+  var p = products.find(function(x){ return x.id===id; });
+  if(jenis==="keluar" && qty > p.stok){ alert("Stok "+p.nama+" tinggal "+p.stok+" — jumlah keluar tidak boleh lebih besar."); return; }
+  var newStok = p.stok + (jenis==="masuk" ? qty : -qty);
+  if(USE_FIREBASE){
+    var entry = {nama:p.nama, jenis:jenis, qty:qty, note:note, oleh:(userName || role),
+      waktu:new Date().toLocaleString("id-ID"), ts:Date.now(), stokAkhir:newStok, demo:false};
+    Promise.all([
+      updateDoc(doc(db, "products", p.id), {stok:newStok}),
+      addDoc(collection(db, "transactions"), entry)
+    ]).then(function(){
+      document.getElementById("f-qty").value = ""; document.getElementById("f-note").value = "";
+      alert("Tersimpan ✅\n"+p.nama+" ("+jenis+" "+qty+") — stok sekarang "+newStok+".\nPerubahan ini langsung terlihat di semua HP.");
+      showTab("riwayat");
+    }).catch(function(err){ alert("Gagal menyimpan: " + err.message + "\nPeriksa koneksi internetmu, lalu coba lagi."); });
+    return;
+  }
+  p.stok = newStok;
+  logs.push({nama:p.nama, jenis:jenis, qty:qty, note:note, oleh:role,
+    waktu:new Date().toLocaleString("id-ID"), ts:Date.now(), stokAkhir:p.stok});
+  save();
+  document.getElementById("f-qty").value = ""; document.getElementById("f-note").value = "";
+  refreshProductSelect();
+  document.getElementById("f-produk").value = id;
+  renderAll();
+  alert("Tersimpan ✅\n"+p.nama+" ("+jenis+" "+qty+") — stok sekarang "+p.stok+".");
+  showTab("riwayat");
+}
+function resetDemo(){
+  if(!confirm("Reset semua stok & riwayat ke data awal demo?")) return;
+  if(USE_FIREBASE){
+    // Mode Firebase: kembalikan stok ke data awal + hapus transaksi CONTOH
+    // lalu buat ulang. Transaksi ASLI (yang diinput staff/manager) TIDAK dihapus.
+    var batch = writeBatch(db);
+    DEFAULT_PRODUCTS.forEach(function(p){ batch.set(doc(db, "products", p.id), p); });
+    getDocs(query(collection(db, "transactions"), where("demo", "==", true))).then(function(snap){
+      snap.forEach(function(d){ batch.delete(d.ref); });
+      seedLogs().forEach(function(l){ batch.set(doc(collection(db, "transactions")), demoTxDoc(l)); });
+      return batch.commit();
+    }).then(function(){
+      alert("Demo direset. Stok kembali ke data awal dan transaksi contoh dibuat ulang. Transaksi asli tidak dihapus.");
+    }).catch(function(err){ alert("Gagal reset: " + err.message); });
+    return;
+  }
+  products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)); logs = seedLogs(); save();
+  refreshProductSelect();
+  renderAll();
+}
+
+// ---- STARTUP ----
+// Script ini bertipe module (import Firebase), jadi fungsinya TIDAK otomatis
+// jadi global. Baris di bawah mengekspos fungsi yang dipakai inline onclick
+// di HTML supaya tombol & form tetap bekerja.
+if(USE_FIREBASE){ initFirebase(); } else { initDemo(); }
+window.login = login;
+window.logout = logout;
+window.showTab = showTab;
+window.setPeriode = setPeriode;
+window.geserPeriode = geserPeriode;
+window.submitBarang = submitBarang;
+window.submitLogin = submitLogin;
+window.resetDemo = resetDemo;
+window.renderStok = renderStok;
+window.hapusStok = hapusStok;
+</script>
+</body>
+</html>
